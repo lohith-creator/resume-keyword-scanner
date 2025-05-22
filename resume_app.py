@@ -2,33 +2,13 @@ import streamlit as st
 import fitz  # PyMuPDF
 import re
 import nltk
-import ssl
 from nltk import word_tokenize, pos_tag
-from pathlib import Path
 
-# ========= NLTK Initialization ==============
-def init_nltk_data():
-    try:
-        nltk_path = Path("nltk_data")
-        nltk_path.mkdir(exist_ok=True)
+# ===== Download required NLTK resources =====
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
 
-        nltk.data.path.clear()
-        nltk.data.path.append(str(nltk_path.resolve()))
-        nltk.data.path.append("C:/nltk_data")
-
-        # Optional: Bypass SSL (if issues occur)
-        try:
-            ssl._create_default_https_context = ssl._create_unverified_context
-        except AttributeError:
-            pass
-
-        nltk.download('punkt', download_dir=str(nltk_path), quiet=True)
-        nltk.download('averaged_perceptron_tagger', download_dir=str(nltk_path), quiet=True)
-    except Exception as e:
-        print(f"Failed to initialize NLTK: {e}")
-        exit(1)
-        
-# ========= PDF Extraction ==========
+# ===== Extract text from PDF =====
 def extract_text_from_pdf(uploaded_file):
     try:
         with fitz.open(stream=uploaded_file.read(), filetype="pdf") as doc:
@@ -37,11 +17,11 @@ def extract_text_from_pdf(uploaded_file):
         st.error(f"PDF Extraction Error: {e}")
         return ""
 
-# ========= Text Cleaning ==========
+# ===== Clean text =====
 def clean_text(text):
     return re.sub(r"[^\w\s]", "", text).lower()
 
-# ========= Keyword Extraction from JD ==========
+# ===== Extract keywords from job description =====
 def extract_keywords_from_text(text):
     try:
         tokens = word_tokenize(text)
@@ -52,7 +32,7 @@ def extract_keywords_from_text(text):
         st.error(f"Keyword Extraction Error: {e}")
         return []
 
-# ========= Keyword Matching Logic ==========
+# ===== Match keywords =====
 def match_keywords(resume_text, keywords_list):
     resume_words = set(resume_text.split())
     keywords = set([kw.lower() for kw in keywords_list])
@@ -63,7 +43,7 @@ def match_keywords(resume_text, keywords_list):
 
     return matched, missing, score
 
-# ========= Streamlit UI ==========
+# ===== Streamlit UI =====
 st.set_page_config(page_title="Resume Keyword Scanner", page_icon="📄")
 st.title("📄 Resume Keyword Scanner")
 st.markdown("Upload your **resume (PDF)** and paste the **job description** to see how well you match!")
